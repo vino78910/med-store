@@ -1,11 +1,10 @@
-import 'package:flutter/foundation.dart';
-
 class FcmService {
   static Future<void> initialize() async {
     // Top-level background message handler setup:
     // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    debugPrint('FCM Service initialized: ready for push notifications in foreground/background/closed states.');
+    // ignore: avoid_print
+    print('FCM Service initialized: ready for push notifications in foreground/background/closed states.');
   }
 
   static Future<String?> getDeviceToken() async {

@@ -6,6 +6,7 @@ import '../../services/patient_service.dart';
 import '../../services/location_service.dart';
 import '../../theme/app_theme.dart';
 import 'availability_alerts_screen.dart';
+import 'pharmacy_detail_screen.dart';
 
 class FindMedicineScreen extends StatefulWidget {
   final String? initialQuery;
@@ -55,6 +56,29 @@ class _FindMedicineScreenState extends State<FindMedicineScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Find Medicine Nearby'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bookmark_add_outlined),
+            tooltip: 'Save Search',
+            onPressed: () {
+              final query = _searchController.text.trim();
+              if (query.isNotEmpty) {
+                appState.saveSearch(
+                  query: query,
+                  dosageForm: _selectedDosageForm,
+                  radiusKm: _radiusKm,
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: AppColors.normal,
+                    content: Text('Saved "$query" to your saved searches!'),
+                  ),
+                );
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
@@ -225,17 +249,47 @@ class _FindMedicineScreenState extends State<FindMedicineScreen> {
         break;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (ctx) => PharmacyDetailScreen(
+              pharmacy: result.pharmacy,
+              medicineName: result.medicineName,
+              strength: result.strength,
+              dosageForm: result.dosageForm,
+              availability: result.availability,
+              lastStockUpdate: result.lastStockUpdate,
+              onSubscribeAlert: () {
+                appState.subscribeToMedicineAvailability(
+                  medicineName: result.medicineName,
+                  strength: result.strength,
+                  dosageForm: result.dosageForm,
+                  radiusKm: _radiusKm,
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: AppColors.normal,
+                    content: Text('Subscribed to alerts for ${result.medicineName}!'),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Availability Status Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -376,7 +430,8 @@ class _FindMedicineScreenState extends State<FindMedicineScreen> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   void _showDirectionsModal(BuildContext context, PatientSearchResult result) {

@@ -4,6 +4,7 @@ import '../../widgets/custom_app_bar.dart';
 import 'patient_home_screen.dart';
 import 'find_medicine_screen.dart';
 import 'availability_alerts_screen.dart';
+import 'saved_searches_screen.dart';
 import 'patient_profile_screen.dart';
 
 class PatientMainNav extends StatefulWidget {
@@ -28,6 +29,7 @@ class _PatientMainNavState extends State<PatientMainNav> {
       PatientHomeScreen(onNavigateTab: _onTabSelected),
       const FindMedicineScreen(),
       const AvailabilityAlertsScreen(),
+      const SavedSearchesScreen(),
       const PatientProfileScreen(),
     ];
 
@@ -35,6 +37,7 @@ class _PatientMainNavState extends State<PatientMainNav> {
       'VitalMed Patient Home',
       'Find Medicine Nearby',
       'My Restock Alerts',
+      'Saved Searches',
       'Patient Profile',
     ];
 
@@ -54,11 +57,15 @@ class _PatientMainNavState extends State<PatientMainNav> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.search_rounded),
-            label: 'Find Medicine',
+            label: 'Find Med',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications_active_rounded),
             label: 'Alerts',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark_rounded),
+            label: 'Saved',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_rounded),

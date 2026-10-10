@@ -30,6 +30,7 @@ class AppState extends ChangeNotifier {
   List<RedistributionTransferModel> _transfers = [];
   List<PatientSubscriptionModel> _subscriptions = [];
   List<NotificationModel> _notifications = [];
+  List<Map<String, dynamic>> _savedSearches = [];
 
   // Configurable thresholds for current pharmacy
   StockoutThresholds _thresholds = const StockoutThresholds(
@@ -55,6 +56,22 @@ class AppState extends ChangeNotifier {
     _transfers = SampleDataService.getInitialTransfers();
     _subscriptions = SampleDataService.getInitialSubscriptions();
     _notifications = SampleDataService.getInitialNotifications();
+    _savedSearches = [
+      {
+        'query': 'Paracetamol Syrup',
+        'strength': '250mg/5ml',
+        'dosageForm': 'Syrup',
+        'radiusKm': 10.0,
+        'savedAt': DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
+      },
+      {
+        'query': 'Salbutamol Inhaler',
+        'strength': '100mcg',
+        'dosageForm': 'Inhaler',
+        'radiusKm': 5.0,
+        'savedAt': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+      },
+    ];
 
     // Default to Pharmacy Admin role for Apex Care Pharmacy
     _currentUser = SampleDataService.getSamplePharmacyAdmin();
@@ -233,6 +250,12 @@ class AppState extends ChangeNotifier {
   }
 
   int get recentAlertsCount => currentPharmacyAlerts.length;
+
+  List<StockMovementModel> get currentPharmacyMovements {
+    final pharmacyId = _currentUser?.pharmacyId;
+    if (pharmacyId == null) return _movements;
+    return _movements.where((m) => m.pharmacyId == pharmacyId).toList();
+  }
 
   // =========================================================================
   // INVENTORY OPERATIONS (RESTOCK, DISPENSE, ADD, EDIT)
@@ -920,6 +943,31 @@ class AppState extends ChangeNotifier {
     final index = _subscriptions.indexWhere((s) => s.id == subscriptionId);
     if (index != -1) {
       _subscriptions[index] = _subscriptions[index].copyWith(active: false);
+      notifyListeners();
+    }
+  }
+
+  List<Map<String, dynamic>> get savedSearches => _savedSearches;
+
+  void saveSearch({
+    required String query,
+    String? strength,
+    String? dosageForm,
+    double radiusKm = 10.0,
+  }) {
+    _savedSearches.insert(0, {
+      'query': query,
+      'strength': strength ?? 'Standard',
+      'dosageForm': dosageForm ?? 'All Forms',
+      'radiusKm': radiusKm,
+      'savedAt': DateTime.now().toIso8601String(),
+    });
+    notifyListeners();
+  }
+
+  void removeSavedSearch(int index) {
+    if (index >= 0 && index < _savedSearches.length) {
+      _savedSearches.removeAt(index);
       notifyListeners();
     }
   }

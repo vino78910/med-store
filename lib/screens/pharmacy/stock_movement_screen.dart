@@ -12,9 +12,7 @@ class StockMovementScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final pharmacyId = appState.currentUser?.pharmacyId;
-    final movements = appState.currentPharmacyInventory.isEmpty
-        ? <StockMovementModel>[]
-        : appState.getInitialMovementsFiltered(pharmacyId);
+    final movements = appState.currentPharmacyMovements;
 
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
@@ -143,12 +141,5 @@ class StockMovementScreen extends StatelessWidget {
               },
             ),
     );
-  }
-}
-
-extension AppStateMovementExtension on AppState {
-  List<StockMovementModel> getInitialMovementsFiltered(String? pharmacyId) {
-    // Returns full reactive movement log
-    return SampleDataService.getInitialMovements();
   }
 }
