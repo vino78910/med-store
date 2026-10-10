@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isPharmacyStaff(pharmacyId) {
+      return isAuthenticated() && 
+             (getUserData().role in ['pharmacy_admin', 'pharmacist']) &&
+             getUserData().pharmacyId == pharmacyId;
+    }
+    
+    function isPharmacyAdmin(pharmacyId) {
+      return isAuthenticated() && 
+             getUserData().role == 'pharmacy_admin' &&
+             getUserData().pharmacyId == pharmacyId;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && (request.auth.uid == userId || getUserData().role == 'pharmacy_admin');
+      allow delete: if false; // Soft delete only
+    }
+
+    // Pharmacies Collection - Public info readable by all (name, address, hours, location)
+    match /pharmacies/{pharmacyId} {
+      allow read: if true; // Allows patients to locate pharmacies
+      allow create: if isAuthenticated();
+      allow update: if isPharmacyAdmin(pharmacyId);
+      allow delete: if false;
+    }
+
+    // Medicines Master Catalog
+    match /medicines/{medicineId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && getUserData().role in ['pharmacy_admin', 'pharmacist'];
+    }
+
+    // Pharmacy Inventory - Filtered read for patients, full read/write for pharmacy staff
+    match /pharmacies/{pharmacyId}/inventory/{itemId} {
+      // Patients can only check availability status, staff have full access
+      allow read: if true;
+      allow write: if isPharmacyStaff(pharmacyId);
+    }
+
+    // Stock Movements - Immutable audit trail
+    match /stock_movements/{movementId} {
+      allow read: if isAuthenticated() && isPharmacyStaff(resource.data.pharmacyId);
+      allow create: if isAuthenticated() && isPharmacyStaff(request.resource.data.pharmacyId);
+      allow update, delete: if false; // Append-only immutable log
+    }
+
+    // Stock Alerts
+    match /stock_alerts/{alertId} {
+      allow read: if isAuthenticated() && (
+        isPharmacyStaff(resource.data.pharmacyId) || 
+        getUserData().role == 'pharmacy_admin'
+      );
+      allow write: if isAuthenticated();
+    }
+
+    // Medicine Redistribution Requests
+    match /medicine_requests/{requestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && getUserData().role in ['pharmacy_admin', 'pharmacist'];
+      allow update: if isAuthenticated(); // Transacting pharmacies
+      allow delete: if false;
+    }
+
+    // Redistribution Transfers - Atomic compliance & audit
+    match /redistribution_transfers/{transferId} {
+      allow read: if isAuthenticated() && (
+        isPharmacyStaff(resource.data.sourcePharmacyId) ||
+        isPharmacyStaff(resource.data.destinationPharmacyId)
+      );
+      allow create: if isAuthenticated() && isPharmacyStaff(request.resource.data.destinationPharmacyId);
+      allow update: if isAuthenticated() && (
+        isPharmacyStaff(resource.data.sourcePharmacyId) ||
+        isPharmacyStaff(resource.data.destinationPharmacyId)
+      );
+    }
+
+    // Patient Medicine Subscriptions
+    match /patient_subscriptions/{subscriptionId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == resource.data.patientId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.patientId;
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.targetUserId ||
+        (resource.data.targetPharmacyId != null && isPharmacyStaff(resource.data.targetPharmacyId))
+      );
+      allow update: if isAuthenticated();
+      allow create: if isAuthenticated();
+    }
+  }
+}
