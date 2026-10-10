@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # VitalMed
 
 > **"Right Medicine, Right Time, Every Life."**
@@ -235,3 +236,6 @@ firebase deploy --only functions
 
 ## 📝 License
 This project is developed for the VitalMed initiative. Sample data is fictional and designated for testing and demonstration purposes.
+=======
+# med-store
+>>>>>>> e7a91a79ad2225d5e0421e5900bcda7b54c863a4
