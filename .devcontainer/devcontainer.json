@@ -1,0 +1,20 @@
+{
+  "name": "VitalMed Flutter Web Environment",
+  "image": "ghcr.io/cirruslabs/flutter:latest",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Dart-Code.flutter",
+        "Dart-Code.dart-code"
+      ]
+    }
+  },
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "Flutter Web App",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postCreateCommand": "flutter pub get"
+}
